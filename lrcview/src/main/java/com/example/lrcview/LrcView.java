@@ -209,32 +209,30 @@ public class LrcView extends View {
         }
     }
 
-//    @Override
-//    public boolean onTouchEvent(MotionEvent event) {
-//        if (!mIsPlayer) {
-//            return super.onTouchEvent(event);
-//        }
-//        switch (event.getAction()) {
-//            case MotionEvent.ACTION_DOWN:
-//                mIsOnTouching = true;
-//                mTouchY = (int) event.getY();
-//                mCurrentY = getScrollY();
-//                break;
-//            case MotionEvent.ACTION_MOVE:
-//                int moveY = (int) (event.getY() - mTouchY);
-//
-//                if (Math.abs(moveY) > 10) {
-//                    setScrollY(mCurrentY - moveY);
-//                    Log.e("---", "------mCurrentY - moveY=" + (mCurrentY - moveY));
-//                }
-//                return true;
-//            case MotionEvent.ACTION_UP:
-//                mIsOnTouching = false;
-//                mCurrentY = 0;
-//                setScrollY(mCurrentY);
-//                break;
-//            default:
-//        }
-//        return true;
-//    }
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (mIsPlayer) {
+            return super.onTouchEvent(event);
+        }
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                mIsOnTouching = true;
+                mTouchY = (int) event.getY();
+                mCurrentY = getScrollY();
+                break;
+            case MotionEvent.ACTION_MOVE:
+                int moveY = (int) (event.getY() - mTouchY);
+
+                if (Math.abs(moveY) > 10 && Math.abs(getScrollY()) < 400) {
+                    setScrollY(mCurrentY - moveY);
+                    Log.e("---", "------mCurrentY - moveY=" + (mCurrentY - moveY));
+                }
+                return true;
+            case MotionEvent.ACTION_UP:
+                mIsOnTouching = false;
+                break;
+            default:
+        }
+        return true;
+    }
 }
