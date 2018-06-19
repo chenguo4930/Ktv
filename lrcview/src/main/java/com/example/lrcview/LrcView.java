@@ -11,21 +11,22 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 
-import com.example.lrcview.R;
 import com.example.lrcview.bean.LrcBean;
 import com.example.lrcview.util.LrcUtil;
 
 import java.util.List;
 
-
 /**
- * Created by 王松 on 2016/10/21.
+ * @author 程果
  */
-
 public class LrcView extends View {
 
     public static final int MODE_NORMAL = 0;
     public static final int MODE_KTV = 1;
+    /**
+     * 每行歌词的高度
+     */
+    public static final int LRC_ITEM_HEIGHT = 80;
 
     private List<LrcBean> list;
     private Paint gPaint;
@@ -38,9 +39,9 @@ public class LrcView extends View {
     private int lrcColor;
     private int mode = MODE_NORMAL;
     /**
-     * 是否用户触摸滑动
+     * 歌词的高度
      */
-    private boolean mIsOnTouching;
+    private int mLrcHeight;
     /**
      * 触摸初始位置Y
      */
@@ -72,16 +73,15 @@ public class LrcView extends View {
     /**
      * 标准歌词字符串
      *
-     * @param lrc
+     * @param lrc 歌词字符串
      */
     public void setLrc(String lrc) {
         list = LrcUtil.parseStr2List(lrc);
+        mLrcHeight = (list.size() + 1) * LRC_ITEM_HEIGHT;
     }
 
     /**
-     * 是不是主播端
-     *
-     * @param isPlayer
+     * @param isPlayer 是不是主播端
      */
     public void setIsPlayer(boolean isPlayer) {
         mIsPlayer = isPlayer;
@@ -136,9 +136,9 @@ public class LrcView extends View {
         if (mIsPlayer) {
             long start = list.get(currentPosition).getStart();
 
-            float v = (currentMillis - start) > 500 ? currentPosition * 80 : lastPosition * 80 + (currentPosition - lastPosition) * 80 * ((currentMillis - start) / 500f);
+            float v = (currentMillis - start) > 500 ? currentPosition * LRC_ITEM_HEIGHT : lastPosition * LRC_ITEM_HEIGHT + (currentPosition - lastPosition) * LRC_ITEM_HEIGHT * ((currentMillis - start) / 500f);
             setScrollY((int) v);
-            if (getScrollY() == currentPosition * 80) {
+            if (getScrollY() == currentPosition * LRC_ITEM_HEIGHT) {
                 lastPosition = currentPosition;
             }
             postInvalidateDelayed(100);
@@ -150,17 +150,17 @@ public class LrcView extends View {
             for (int i = 0; i < list.size(); i++) {
                 if (mIsPlayer) {
                     if (i == currentPosition) {
-                        canvas.drawText(list.get(i).getLrc(), width / 2, height / 2 + 80 * i, hPaint);
+                        canvas.drawText(list.get(i).getLrc(), width / 2, height / 2 + LRC_ITEM_HEIGHT * i, hPaint);
                     } else {
-                        canvas.drawText(list.get(i).getLrc(), width / 2, height / 2 + 80 * i, gPaint);
+                        canvas.drawText(list.get(i).getLrc(), width / 2, height / 2 + LRC_ITEM_HEIGHT * i, gPaint);
                     }
                 } else {
-                    canvas.drawText(list.get(i).getLrc(), width / 2, 100 + 80 * i, gPaint);
+                    canvas.drawText(list.get(i).getLrc(), width / 2, 100 + LRC_ITEM_HEIGHT * i, gPaint);
                 }
             }
         } else {
             for (int i = 0; i < list.size(); i++) {
-                canvas.drawText(list.get(i).getLrc(), width / 2, height / 2 + 80 * i, gPaint);
+                canvas.drawText(list.get(i).getLrc(), width / 2, height / 2 + LRC_ITEM_HEIGHT * i, gPaint);
             }
             String highLineLrc = list.get(currentPosition).getLrc();
             int highLineWidth = (int) gPaint.measureText(highLineLrc);
@@ -169,13 +169,11 @@ public class LrcView extends View {
             long start = lrcBean.getStart();
             long end = lrcBean.getEnd();
             int i = (int) ((currentMillis - start) * 1.0f / (end - start) * highLineWidth);
-            Log.e("---", "------i=" + i);
-
             if (i > 0) {
-                Bitmap textBitmap = Bitmap.createBitmap(i, 80, Bitmap.Config.ARGB_8888);
+                Bitmap textBitmap = Bitmap.createBitmap(i, LRC_ITEM_HEIGHT, Bitmap.Config.ARGB_8888);
                 Canvas textCanvas = new Canvas(textBitmap);
-                textCanvas.drawText(highLineLrc, highLineWidth / 2, 80, hPaint);
-                canvas.drawBitmap(textBitmap, leftOffset, height / 2 + 80 * (currentPosition - 1), null);
+                textCanvas.drawText(highLineLrc, highLineWidth / 2, LRC_ITEM_HEIGHT, hPaint);
+                canvas.drawBitmap(textBitmap, leftOffset, height / 2 + LRC_ITEM_HEIGHT * (currentPosition - 1), null);
             }
         }
     }
@@ -211,25 +209,25 @@ public class LrcView extends View {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        if (mIsPlayer) {
+        if (mIsPlayer || getMeasuredHeight() > mLrcHeight) {
             return super.onTouchEvent(event);
         }
         switch (event.getAction()) {
             case MotionEvent.ACTION_DOWN:
-                mIsOnTouching = true;
                 mTouchY = (int) event.getY();
                 mCurrentY = getScrollY();
                 break;
             case MotionEvent.ACTION_MOVE:
                 int moveY = (int) (event.getY() - mTouchY);
-
-                if (Math.abs(moveY) > 10 && Math.abs(getScrollY()) < 400) {
-                    setScrollY(mCurrentY - moveY);
-                    Log.e("---", "------mCurrentY - moveY=" + (mCurrentY - moveY));
+                int y = mCurrentY - moveY;
+                if (y <= mLrcHeight - getMeasuredHeight() && y >= 0) {
+                    setScrollY(y);
+                    Log.e("---", "-----y=" + y);
                 }
+                Log.e("---", "------ getScrollY()=" + getScrollY());
+                Log.e("---", "------ getMeasuredHeight()=" + getMeasuredHeight());
                 return true;
             case MotionEvent.ACTION_UP:
-                mIsOnTouching = false;
                 break;
             default:
         }

@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 lrcView.setLrc(lrcString);
                 lrcView.setPlayer(mMediaPlayer);
-                lrcView.setMode(LrcView.MODE_KTV);
+                lrcView.setMode(LrcView.MODE_NORMAL);
                 lrcView.setIsPlayer(true);
                 lrcView.init();
 
